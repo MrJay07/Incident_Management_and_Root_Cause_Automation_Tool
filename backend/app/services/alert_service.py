@@ -50,7 +50,7 @@ def send_incident_email_alert(db: Session, incident: Incident) -> AlertHistory:
             smtp.send_message(msg)
         status = "sent"
         error_message = None
-    except Exception as exc:  # noqa: BLE001
+    except (smtplib.SMTPException, TimeoutError, OSError) as exc:
         status = "failed"
         error_message = str(exc)
 

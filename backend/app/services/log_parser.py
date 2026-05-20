@@ -57,12 +57,27 @@ def parse_log_line(line: str) -> ParsedLog | None:
 
 def detect_incidents(parsed_log: ParsedLog, custom_rules: list[dict] | None = None) -> list[DetectedIncident]:
     incidents: list[DetectedIncident] = []
-    rules = [*DEFAULT_RULES, *(custom_rules or [])]
+    rules = [*DEFAULT_RULES]
     for rule in rules:
         pattern = rule.get("pattern")
         if not pattern:
             continue
         if re.search(pattern, parsed_log.message, flags=re.IGNORECASE):
+            sev = SEVERITY_ORDER.get(rule.get("severity", parsed_log.level), SEVERITY_ORDER.get(parsed_log.level, Severity.WARNING))
+            incidents.append(
+                DetectedIncident(
+                    title=rule.get("title", "Rule-triggered incident"),
+                    severity=sev,
+                    service=parsed_log.service,
+                    description=f"{rule.get('name', 'custom_rule')} matched: {parsed_log.message}",
+                )
+            )
+
+    for rule in custom_rules or []:
+        pattern = rule.get("pattern")
+        if not pattern:
+            continue
+        if pattern.lower() in parsed_log.message.lower():
             sev = SEVERITY_ORDER.get(rule.get("severity", parsed_log.level), SEVERITY_ORDER.get(parsed_log.level, Severity.WARNING))
             incidents.append(
                 DetectedIncident(
