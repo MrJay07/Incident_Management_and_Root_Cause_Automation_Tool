@@ -1,0 +1,5 @@
+2026-05-20T15:00:00Z INFO api-gateway - request completed in 120ms
+2026-05-20T15:01:00Z WARNING auth-service - invalid token presented by user session
+2026-05-20T15:02:00Z ERROR payments-service - database timeout while creating charge
+2026-05-20T15:02:10Z CRITICAL worker - out of memory while processing queue batch
+2026-05-20T15:03:00Z ERROR api-gateway - upstream timeout waiting for auth-service
