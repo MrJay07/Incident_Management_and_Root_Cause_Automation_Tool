@@ -5,10 +5,6 @@ from datetime import datetime
 from app.models import Severity
 
 
-LOG_REGEX = re.compile(
-    r"^(?P<timestamp>\S+)\s+(?P<level>INFO|WARNING|ERROR|CRITICAL)\s+(?P<service>[\w\-]+)\s+-\s+(?P<message>.*)$"
-)
-
 DEFAULT_RULES = [
     {"name": "db_connection_failure", "pattern": r"database.*(timeout|refused|failed)", "severity": "CRITICAL", "title": "Database connectivity failure"},
     {"name": "memory_pressure", "pattern": r"out of memory|memory pressure", "severity": "CRITICAL", "title": "Memory pressure detected"},
@@ -42,16 +38,25 @@ class DetectedIncident:
 
 
 def parse_log_line(line: str) -> ParsedLog | None:
-    match = LOG_REGEX.match(line.strip())
-    if not match:
+    line = line.strip()
+    if " - " not in line:
         return None
-    ts = datetime.fromisoformat(match.group("timestamp").replace("Z", "+00:00"))
+    header, message = line.split(" - ", 1)
+    parts = header.split(" ", 2)
+    if len(parts) != 3:
+        return None
+
+    timestamp, level, service = parts
+    if level not in {"INFO", "WARNING", "ERROR", "CRITICAL"}:
+        return None
+
+    ts = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
     return ParsedLog(
         timestamp=ts,
-        level=match.group("level"),
-        service=match.group("service"),
-        message=match.group("message"),
-        raw_line=line.strip(),
+        level=level,
+        service=service,
+        message=message,
+        raw_line=line,
     )
 
 
